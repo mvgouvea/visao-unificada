@@ -121,6 +121,21 @@ O script exibe no terminal quantos PDFs foram mesclados e o total de páginas po
 
 ---
 
+## Próximo passo — evolução da aplicação
+
+A versão atual resolve a junção dos PDFs via **script em linha de comando**, com pastas locais ou CSV exportado da query. Esse é o **primeiro passo**: funcional, direto e adequado para validar o processo.
+
+Como **segundo passo**, a aplicação será evoluída para ficar **mais dinâmica e acessível ao usuário**, reduzindo passos manuais e tornando a unificação do conteúdo mais simples. Entre as melhorias previstas:
+
+- **Interface gráfica** para seleionar, organizar e mesclar os documentos sem depender do terminal
+- **Fluxo mais intuitivo** — arrastar arquivos, visualizar blocos e confirmar a geração com poucos cliques
+- **Menos configuração manual** — reduzir a necessidade de copiar PDFs para pastas ou editar CSVs
+- **Integração facilitada** com a origem dos documentos (export da query, pastas ou futura conexão com o banco)
+
+O objetivo é que quem precisa unificar Autorizações de Viagens e Prestações de Contas consiga concluir a tarefa de forma **rápida, clara e com menos risco de erro**, mantendo a mesma regra de negócio: dois blocos finais, um PDF por bloco.
+
+---
+
 ## Valores aceitos na coluna de bloco
 
 O script reconhece automaticamente variações comuns:
