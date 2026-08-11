@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+
+# Variáveis de ambiente e credenciais
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+*.iml
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Documentos locais (entrada e saída do processamento)
+documentos_originais/**/*.pdf
+blocos/**/*.pdf
+
+# Exports da query — mantém apenas o exemplo versionado
+*.csv
+!manifest.example.csv
+
+# Mantém pastas vazias no repositório
+!**/.gitkeep
