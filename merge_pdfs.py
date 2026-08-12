@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import csv
 import sys
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -24,6 +25,13 @@ BLOCOS = {
     "autorizacoes": "autorizacoes_viagens.pdf",
     "prestacoes": "prestacoes_contas_viagens.pdf",
 }
+
+BLOCO_LABELS = {
+    "autorizacoes": "Autorizações de Viagens",
+    "prestacoes": "Prestações de Contas",
+}
+
+ARQUIVO_COMPACTADO = "blocos_docs_unificados.zip"
 
 # Variações de nomenclatura vindas da query do banco ou do CSV exportado.
 ALIASES = {
@@ -46,6 +54,14 @@ class Documento:
     bloco: str
     ordem: int
     caminho: Path
+
+
+@dataclass(frozen=True)
+class ResultadoBloco:
+    bloco: str
+    destino: Path
+    documentos: int
+    paginas: int
 
 
 def normalizar_bloco(valor: str) -> str:
@@ -205,6 +221,22 @@ def mesclar_bloco(documentos: list[Documento], destino: Path) -> int:
     return paginas
 
 
+def compactar_blocos(resultados: list[ResultadoBloco], destino_zip: Path) -> Path:
+    """Compacta os PDFs mesclados em um único arquivo ZIP."""
+    destino_zip.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with zipfile.ZipFile(destino_zip, "w", compression=zipfile.ZIP_DEFLATED) as arquivo_zip:
+            for resultado in resultados:
+                arquivo_zip.write(resultado.destino, arcname=resultado.destino.name)
+    except PermissionError as exc:
+        raise PermissionError(
+            f"Não foi possível gravar {destino_zip}. "
+            "Feche o arquivo se estiver aberto em outro programa e execute novamente."
+        ) from exc
+
+    return destino_zip
+
+
 def construir_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Junta PDFs de viagens em dois blocos (autorizações e prestações de contas)."
@@ -280,31 +312,46 @@ def main(argv: list[str] | None = None) -> int:
 
     agrupados = agrupar_por_bloco(documentos)
     saida = args.saida.resolve()
-    total_paginas = 0
-    arquivos_gerados = 0
+    resultados: list[ResultadoBloco] = []
 
     print(f"Saída: {saida}")
     # Um arquivo de saída por bloco; cada execução regenera os PDFs mesclados.
     for bloco, nome_arquivo in BLOCOS.items():
         itens = agrupados.get(bloco, [])
         if not itens:
-            print(f"[AVISO] Bloco '{bloco}' sem documentos — arquivo não gerado.")
+            print(f"[AVISO] {BLOCO_LABELS[bloco]}: sem documentos — bloco não gerado.")
             continue
 
         destino = saida / nome_arquivo
         paginas = mesclar_bloco(itens, destino)
-        total_paginas += paginas
-        arquivos_gerados += 1
-        print(
-            f"[OK] {destino.name}: {len(itens)} PDF(s), {paginas} página(s) "
-            f"-> {destino}"
+        resultados.append(
+            ResultadoBloco(
+                bloco=bloco,
+                destino=destino,
+                documentos=len(itens),
+                paginas=paginas,
+            )
         )
+        print(f"[OK] {BLOCO_LABELS[bloco]}: {destino.name} -> {destino}")
 
-    if arquivos_gerados == 0:
+    if not resultados:
         print("[ERRO] Nenhum bloco foi gerado.", file=sys.stderr)
         return 1
 
-    print(f"Concluído: {arquivos_gerados} arquivo(s), {total_paginas} página(s) no total.")
+    total_documentos = sum(resultado.documentos for resultado in resultados)
+    total_paginas = sum(resultado.paginas for resultado in resultados)
+
+    print("")
+    print("--- Resumo ---")
+    for resultado in resultados:
+        print(
+            f"{BLOCO_LABELS[resultado.bloco]}: "
+            f"{resultado.documentos} PDF(s), {resultado.paginas} página(s)"
+        )
+    print(f"Total: {total_documentos} PDF(s), {total_paginas} página(s)")
+
+    arquivo_zip = compactar_blocos(resultados, saida / ARQUIVO_COMPACTADO)
+    print(f"[OK] Arquivo compactado: {arquivo_zip.name} -> {arquivo_zip}")
     return 0
 
 

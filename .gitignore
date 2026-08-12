@@ -26,6 +26,8 @@ desktop.ini
 # Documentos locais (entrada e saída do processamento)
 documentos_originais/**/*.pdf
 blocos/**/*.pdf
+blocos/**/*.zip
+documentos_originais/**/*.zip
 
 # Exports da query — mantém apenas o exemplo versionado
 *.csv
