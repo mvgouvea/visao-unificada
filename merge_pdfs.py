@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 """
-Junta PDFs de viagens em dois blocos:
-  - autorizacoes: Autorizações de Viagens (Nacionais e Internacionais)
-  - prestacoes: Prestações de Contas de Viagens
-
-Cada execução relê os PDFs de entrada e sobrescreve os blocos em `blocos/`.
+Junta PDFs em dois blocos: autorizacoes e prestacoes.
 """
 
 from __future__ import annotations
@@ -27,13 +23,13 @@ BLOCOS = {
 }
 
 BLOCO_LABELS = {
-    "autorizacoes": "Autorizações de Viagens",
-    "prestacoes": "Prestações de Contas",
+    "autorizacoes": "Autorizações",
+    "prestacoes": "Prestações",
 }
 
 ARQUIVO_COMPACTADO = "blocos_docs_unificados.zip"
 
-# Variações de nomenclatura vindas da query do banco ou do CSV exportado.
+# Variações de nomenclatura aceitas no CSV.
 ALIASES = {
     "autorizacao": "autorizacoes",
     "autorizacoes": "autorizacoes",
@@ -65,7 +61,7 @@ class ResultadoBloco:
 
 
 def normalizar_bloco(valor: str) -> str:
-    """Converte rótulos do banco/CSV para as chaves internas dos blocos."""
+    """Converte rótulos do CSV para as chaves internas dos blocos."""
     chave = valor.strip().lower().replace("-", "_").replace(" ", "_")
     bloco = ALIASES.get(chave)
     if not bloco:
@@ -85,7 +81,7 @@ def ler_manifesto(
     delimitador: str,
     encoding: str,
 ) -> list[Documento]:
-    """Carrega a lista de PDFs a partir do CSV exportado da query do banco."""
+    """Carrega a lista de PDFs a partir de um CSV."""
     documentos: list[Documento] = []
 
     with caminho.open("r", encoding=encoding, newline="") as arquivo:
@@ -239,24 +235,24 @@ def compactar_blocos(resultados: list[ResultadoBloco], destino_zip: Path) -> Pat
 
 def construir_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Junta PDFs de viagens em dois blocos (autorizações e prestações de contas)."
+        description="Junta PDFs em dois blocos (autorizações e prestações)."
     )
     parser.add_argument(
         "--manifest",
         type=Path,
-        help="CSV exportado da query do banco com colunas de bloco, caminho e ordem.",
+        help="CSV com colunas de bloco, caminho e ordem.",
     )
     parser.add_argument(
         "--autorizacoes-dir",
         type=Path,
         default=Path("documentos_originais/autorizacoes"),
-        help="Diretório com PDFs de Autorizações de Viagens (padrão: documentos_originais/autorizacoes).",
+        help="Diretório com PDFs de autorizações.",
     )
     parser.add_argument(
         "--prestacoes-dir",
         type=Path,
         default=Path("documentos_originais/prestacoes"),
-        help="Diretório com PDFs de Prestações de Contas (padrão: documentos_originais/prestacoes).",
+        help="Diretório com PDFs de prestações.",
     )
     parser.add_argument(
         "--saida",
@@ -296,7 +292,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = construir_parser()
     args = parser.parse_args(argv)
 
-    # Fonte dos PDFs: CSV da query ou pastas locais (padrão).
+    # Fonte dos PDFs: CSV ou pastas locais (padrão).
     if args.manifest:
         coluna_ordem = args.coluna_ordem.strip() or None
         documentos = ler_manifesto(
